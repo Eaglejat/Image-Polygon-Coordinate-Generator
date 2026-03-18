@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Polygon Coordinate Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eaeaea;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        /* Upload */
+        .upload-area {
+            background: #16213e;
+            border: 2px dashed #0f3460;
+            border-radius: 12px;
+            padding: 35px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #00d4ff;
+        }
+
+        .upload-area.hidden {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #16213e;
+            border-radius: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            background: #00b8e6;
+        }
+
+        .btn-secondary {
+            background: #0f3460;
+            color: #eaeaea;
+        }
+
+        .btn-secondary:hover {
+            background: #1a4a7a;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: #00c853;
+            color: #1a1a2e;
+        }
+
+        .btn-success:hover {
+            background: #00a844;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ViewBox Settings - IMPORTANT FOR TEST.HTML */
+        .viewbox-settings {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            background: #0a1628;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #00d4ff;
+        }
+
+        .viewbox-settings label {
+            font-size: 0.8rem;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        .viewbox-settings input {
+            width: 70px;
+            padding: 5px 8px;
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 4px;
+            color: #00ff88;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .viewbox-settings input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        /* Image Container */
+        .image-wrapper {
+            display: none;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .image-wrapper.active {
+            display: block;
+        }
+
+        .image-container {
+            position: relative;
+            display: inline-block;
+            background: #0d0d1a;
+            border-radius: 10px;
+            border: 2px solid #0f3460;
+            overflow: hidden;
+        }
+
+        #mainImage {
+            display: block;
+            max-width: 100%;
+            max-height: 60vh;
+            height: auto;
+            user-select: none;
+        }
+
+        #svgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* When polygon is closed and hovering over it for move */
+        #svgCanvas.move-mode {
+            cursor: move;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* Output */
+        .output-section {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .output-header h3 {
+            font-size: 0.95rem;
+            color: #00d4ff;
+        }
+
+        .output-tabs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .output-tab {
+            padding: 6px 12px;
+            background: #0f3460;
+            border: none;
+            border-radius: 4px;
+            color: #aaa;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .output-tab.active {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
+        .output-box {
+            background: #0a1628;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            min-height: 60px;
+            color: #00ff88;
+            border: 1px solid #0f3460;
+            white-space: pre-wrap;
+        }
+
+        .output-box.empty {
+            color: #666;
+        }
+
+        /* Help Box */
+        .help-box {
+            background: #0a1628;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .help-box h4 {
+            color: #00ff88;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .help-box p {
+            color: #aaa;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .help-box code {
+            background: #16213e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #00d4ff;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #00d4ff;
+            color: #1a1a2e;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* ===== VIEW SELECTED PORTION MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h3 {
+            color: #00d4ff;
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            padding: 8px 20px;
+            background: #e74c3c;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #c0392b;
+        }
+
+        .modal-content {
+            background: #16213e;
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow: auto;
+            text-align: center;
+        }
+
+        .modal-content canvas {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+        }
+
+        @media (max-width: 768px) {
+            .viewbox-settings {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .controls {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Image Polygon Coordinate Generator</h1>
+            <p>Test.html compatible - Set ViewBox to 114 × 63.8 for your hotspot system</p>
+        </div>
+
+        <!-- Help Box -->
+        <div class="help-box">
+            <h4>✅ Test.html Ke Liye Instructions</h4>
+            <p>
+                Aapka test.html <code>viewBox="0 0 114 63.8"</code> use karta hai.<br>
+                ViewBox W = <strong>114</strong> aur H = <strong>63.8</strong> set karo (already set hai).<br>
+                Phir "Custom ViewBox" tab se coordinates copy karo - yeh directly test.html mein kaam karenge!
+            </p>
+        </div>
+
+        <!-- Upload -->
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📁</div>
+            <div>Click to upload image</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📷 Image</button>
+            <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>↩ Undo</button>
+            <button class="btn btn-danger" id="clearBtn" onclick="clearAll()" disabled>🗑 Clear</button>
+            <button class="btn btn-secondary" id="closeBtn" onclick="closePolygon()" disabled>⬡ Close</button>
+            <button class="btn btn-success" id="viewBtn" onclick="viewSelectedPortion()" disabled>👁 View
+                Selected</button>
+
+            <!-- VIEWBOX SETTINGS - KEY FOR TEST.HTML COMPATIBILITY -->
+            <div class="viewbox-settings">
+                <label>ViewBox:</label>
+                <input type="number" id="viewboxW" value="114" step="0.1" onchange="updateOutput()">
+                <span style="color:#888">×</span>
+                <input type="number" id="viewboxH" value="63.8" step="0.1" onchange="updateOutput()">
+            </div>
+        </div>
+
+        <!-- Image Canvas -->
+        <div class="image-wrapper" id="imageWrapper">
+            <div class="image-container">
+                <img id="mainImage" alt="Image">
+                <svg id="svgCanvas" preserveAspectRatio="none"></svg>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="pointCount">0</div>
+                <div class="stat-label">Points</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="naturalSize">-</div>
+                <div class="stat-label">Image Size</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="viewboxSize">114×63.8</div>
+                <div class="stat-label">ViewBox</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="scaleInfo">-</div>
+                <div class="stat-label">Scale Factor</div>
+            </div>
+        </div>
+
+        <!-- Output -->
+        <div class="output-section">
+            <div class="output-header">
+                <h3>Generated Coordinates</h3>
+                <div class="output-tabs">
+                    <button class="output-tab active" onclick="setOutputMode('viewbox')">Custom ViewBox</button>
+                    <button class="output-tab" onclick="setOutputMode('pixel')">Natural Pixels</button>
+                    <button class="output-tab" onclick="setOutputMode('percent')">Percentage</button>
+                </div>
+                <button class="btn btn-primary" id="copyBtn" onclick="copyOutput()" disabled>📋 Copy</button>
+            </div>
+            <div class="output-box empty" id="outputBox">Click on image to add points...</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copied!</div>
+
+    <!-- View Selected Portion Modal -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👁 Selected Portion Preview</h3>
+                <button class="modal-close" onclick="closeModal()">✕ Close</button>
+            </div>
+            <canvas id="previewCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        /*
+         * ========================================================================
+         * COORDINATE SYSTEM FOR TEST.HTML COMPATIBILITY
+         * ========================================================================
+         */
+
+        // State
+        let points = [];        // Stored as NATURAL pixel coordinates
+        let isClosed = false;
+        let naturalWidth = 0;
+        let naturalHeight = 0;
+        let dragIndex = -1;
+        let isDragging = false;
+        let outputMode = 'viewbox';  // 'viewbox', 'pixel', 'percent'
+
+        // Preview line state
+        let mouseVBX = 0;
+        let mouseVBY = 0;
+
+        // Polygon move state
+        let isMovingPolygon = false;
+        let moveStartNatural = null;
+        let pointsBeforeMove = [];
+
+        // DOM
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const imageWrapper = document.getElementById('imageWrapper');
+        const mainImage = document.getElementById('mainImage');
+        const svgCanvas = document.getElementById('svgCanvas');
+        const outputBox = document.getElementById('outputBox');
+
+        // File handling
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => { mainImage.src = ev.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Drag drop
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = '#00d4ff'; });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => { mainImage.src = ev.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Image load
+        mainImage.addEventListener('load', function () {
+            naturalWidth = this.naturalWidth;
+            naturalHeight = this.naturalHeight;
+
+            uploadArea.classList.add('hidden');
+            imageWrapper.classList.add('active');
+
+            points = [];
+            isClosed = false;
+
+            requestAnimationFrame(() => {
+                setupSVG();
+                updateStats();
+            });
+        });
+
+        // Get custom viewBox dimensions
+        function getViewBox() {
+            return {
+                w: parseFloat(document.getElementById('viewboxW').value) || 114,
+                h: parseFloat(document.getElementById('viewboxH').value) || 63.8
+            };
+        }
+
+        // Setup SVG with CUSTOM viewBox
+        function setupSVG() {
+            const vb = getViewBox();
+            svgCanvas.setAttribute('viewBox', `0 0 ${vb.w} ${vb.h}`);
+            render();
+        }
+
+        /*
+         * COORDINATE CONVERSION FUNCTIONS
+         */
+
+        // Convert display click → natural pixels
+        function displayToNatural(displayX, displayY) {
+            const displayW = mainImage.clientWidth;
+            const displayH = mainImage.clientHeight;
+            return {
+                x: Math.round((displayX / displayW) * naturalWidth),
+                y: Math.round((displayY / displayH) * naturalHeight)
+            };
+        }
+
+        // Convert natural pixels → custom viewBox coordinates
+        function naturalToViewBox(natX, natY) {
+            const vb = getViewBox();
+            return {
+                x: parseFloat(((natX / naturalWidth) * vb.w).toFixed(1)),
+                y: parseFloat(((natY / naturalHeight) * vb.h).toFixed(1))
+            };
+        }
+
+        // Get click position relative to image
+        function getClickPos(e) {
+            const rect = mainImage.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        /*
+         * FIXED SIZE CALCULATION
+         * Calculate SVG units that correspond to fixed pixel sizes on screen.
+         * This ensures points/text don't grow when browser zooms.
+         */
+        function getFixedSize(pixelSize) {
+            const vb = getViewBox();
+            const displayW = mainImage.clientWidth || 1;
+            // How many viewBox units = 1 display pixel
+            return (vb.w / displayW) * pixelSize;
+        }
+
+        // Check if a natural point is inside the closed polygon
+        function isPointInPolygon(testX, testY) {
+            if (!isClosed || points.length < 3) return false;
+            let inside = false;
+            for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+                const xi = points[i].x, yi = points[i].y;
+                const xj = points[j].x, yj = points[j].y;
+                if (((yi > testY) !== (yj > testY)) &&
+                    (testX < (xj - xi) * (testY - yi) / (yj - yi) + xi)) {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
+        // SVG Click
+        svgCanvas.addEventListener('click', function (e) {
+            if (isDragging || isMovingPolygon) return;
+            if (isClosed) return;
+
+            const click = getClickPos(e);
+            const natural = displayToNatural(click.x, click.y);
+
+            // Check close to first point
+            if (points.length >= 3) {
+                const first = points[0];
+                const dist = Math.sqrt(Math.pow(natural.x - first.x, 2) + Math.pow(natural.y - first.y, 2));
+                const threshold = Math.max(naturalWidth, naturalHeight) * 0.03;
+                if (dist < threshold) {
+                    closePolygon();
+                    return;
+                }
+            }
+
+            points.push(natural);
+            render();
+        });
+
+        // Mouse move - for preview line & polygon move cursor
+        svgCanvas.addEventListener('mousemove', (e) => {
+            const click = getClickPos(e);
+            const displayW = mainImage.clientWidth;
+            const displayH = mainImage.clientHeight;
+            const vb = getViewBox();
+
+            mouseVBX = (click.x / displayW) * vb.w;
+            mouseVBY = (click.y / displayH) * vb.h;
+
+            // Handle polygon dragging
+            if (isMovingPolygon && moveStartNatural) {
+                const currentNatural = displayToNatural(click.x, click.y);
+                const dx = currentNatural.x - moveStartNatural.x;
+                const dy = currentNatural.y - moveStartNatural.y;
+
+                // Move all points
+                points = pointsBeforeMove.map(p => ({
+                    x: Math.max(0, Math.min(naturalWidth, p.x + dx)),
+                    y: Math.max(0, Math.min(naturalHeight, p.y + dy))
+                }));
+                render();
+                return;
+            }
+
+            // Handle point dragging
+            if (isDragging && dragIndex >= 0) {
+                const natural = displayToNatural(click.x, click.y);
+                points[dragIndex] = natural;
+                render();
+                return;
+            }
+
+            // Update cursor for move mode when hovering over closed polygon
+            if (isClosed && !isDragging) {
+                const natural = displayToNatural(click.x, click.y);
+                if (isPointInPolygon(natural.x, natural.y)) {
+                    svgCanvas.classList.add('move-mode');
+                } else {
+                    svgCanvas.classList.remove('move-mode');
+                }
+            }
+
+            // Update preview line
+            if (points.length > 0 && !isClosed) {
+                updatePreviewLine();
+            }
+        });
+
+        // Dragging points & polygon move
+        svgCanvas.addEventListener('mousedown', (e) => {
+            // Point handle drag
+            if (e.target.classList.contains('point-handle')) {
+                e.stopPropagation();
+                e.preventDefault();
+                dragIndex = parseInt(e.target.dataset.index);
+                isDragging = true;
+                return;
+            }
+
+            // Polygon move - click on the polygon fill area
+            if (isClosed && points.length >= 3) {
+                const click = getClickPos(e);
+                const natural = displayToNatural(click.x, click.y);
+                if (isPointInPolygon(natural.x, natural.y)) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    isMovingPolygon = true;
+                    moveStartNatural = natural;
+                    pointsBeforeMove = points.map(p => ({ ...p }));
+                    svgCanvas.classList.add('move-mode');
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isMovingPolygon) {
+                isMovingPolygon = false;
+                moveStartNatural = null;
+                pointsBeforeMove = [];
+                render();
+            }
+            isDragging = false;
+            dragIndex = -1;
+        });
+
+        // Update preview line (dashed line from last point to mouse)
+        function updatePreviewLine() {
+            // Remove existing preview elements
+            const existing = svgCanvas.querySelectorAll('.preview-line, .preview-closing-line');
+            existing.forEach(el => el.remove());
+
+            if (points.length === 0 || isClosed) return;
+
+            const lastPt = naturalToViewBox(points[points.length - 1].x, points[points.length - 1].y);
+            const strokeW = getFixedSize(1.5);
+            const dashSize = getFixedSize(5);
+
+            // Line from last point to cursor
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.classList.add('preview-line');
+            line.setAttribute('x1', lastPt.x);
+            line.setAttribute('y1', lastPt.y);
+            line.setAttribute('x2', mouseVBX);
+            line.setAttribute('y2', mouseVBY);
+            line.setAttribute('stroke', '#ffcc00');
+            line.setAttribute('stroke-width', strokeW);
+            line.setAttribute('stroke-dasharray', `${dashSize} ${dashSize}`);
+            line.setAttribute('opacity', '0.8');
+            line.style.pointerEvents = 'none';
+            svgCanvas.appendChild(line);
+
+            // If 3+ points, also show closing line (from cursor back to first point)
+            if (points.length >= 3) {
+                const firstPt = naturalToViewBox(points[0].x, points[0].y);
+                const closeLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                closeLine.classList.add('preview-closing-line');
+                closeLine.setAttribute('x1', mouseVBX);
+                closeLine.setAttribute('y1', mouseVBY);
+                closeLine.setAttribute('x2', firstPt.x);
+                closeLine.setAttribute('y2', firstPt.y);
+                closeLine.setAttribute('stroke', '#00ff88');
+                closeLine.setAttribute('stroke-width', strokeW);
+                closeLine.setAttribute('stroke-dasharray', `${dashSize} ${dashSize * 0.6}`);
+                closeLine.setAttribute('opacity', '0.5');
+                closeLine.style.pointerEvents = 'none';
+                svgCanvas.appendChild(closeLine);
+            }
+        }
+
+        // Render SVG
+        function render() {
+            const vb = getViewBox();
+            svgCanvas.innerHTML = '';
+
+            // Convert all points to viewBox coordinates for drawing
+            const vbPoints = points.map(p => naturalToViewBox(p.x, p.y));
+
+            // Fixed sizes in SVG units (won't change with browser zoom)
+            const ptRadius = getFixedSize(8);
+            const fontSize = getFixedSize(10);
+            const strokeW = getFixedSize(2);
+            const thinStrokeW = getFixedSize(1);
+            const closeIndicatorR = getFixedSize(18);
+
+            // Polygon fill
+            if (vbPoints.length > 0) {
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', vbPoints.map(p => `${p.x},${p.y}`).join(' '));
+                polygon.setAttribute('fill', isClosed ? 'rgba(0,212,255,0.35)' : 'rgba(0,212,255,0.15)');
+                polygon.setAttribute('stroke', '#00d4ff');
+                polygon.setAttribute('stroke-width', strokeW);
+                if (!isClosed) {
+                    polygon.style.pointerEvents = 'none';
+                }
+                svgCanvas.appendChild(polygon);
+            }
+
+            // Close indicator (green ring near first point)
+            if (vbPoints.length >= 3 && !isClosed) {
+                const indicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                indicator.setAttribute('cx', vbPoints[0].x);
+                indicator.setAttribute('cy', vbPoints[0].y);
+                indicator.setAttribute('r', closeIndicatorR);
+                indicator.setAttribute('fill', 'rgba(0,255,136,0.2)');
+                indicator.setAttribute('stroke', '#00ff88');
+                indicator.setAttribute('stroke-width', thinStrokeW);
+                indicator.style.pointerEvents = 'none';
+                svgCanvas.appendChild(indicator);
+            }
+
+            // Points (circles + numbers)
+            vbPoints.forEach((p, i) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.classList.add('point-handle');
+                circle.dataset.index = i;
+                circle.setAttribute('cx', p.x);
+                circle.setAttribute('cy', p.y);
+                circle.setAttribute('r', ptRadius);
+                circle.setAttribute('fill', i === 0 ? '#00ff88' : '#00d4ff');
+                circle.setAttribute('stroke', '#fff');
+                circle.setAttribute('stroke-width', thinStrokeW);
+                circle.style.cursor = 'grab';
+                svgCanvas.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', p.x);
+                text.setAttribute('y', p.y);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'central');
+                text.setAttribute('fill', '#1a1a2e');
+                text.setAttribute('font-size', fontSize);
+                text.setAttribute('font-weight', 'bold');
+                text.style.pointerEvents = 'none';
+                text.textContent = i + 1;
+                svgCanvas.appendChild(text);
+            });
+
+            // Draw preview line after render if actively drawing
+            if (points.length > 0 && !isClosed) {
+                updatePreviewLine();
+            }
+
+            updateOutput();
+            updateStats();
+            updateButtons();
+        }
+
+        // Output modes
+        function setOutputMode(mode) {
+            outputMode = mode;
+            document.querySelectorAll('.output-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(mode));
+            });
+            updateOutput();
+        }
+
+        function updateOutput() {
+            if (points.length === 0) {
+                outputBox.textContent = 'Click on image to add points...';
+                outputBox.classList.add('empty');
+                return;
+            }
+
+            outputBox.classList.remove('empty');
+            let output;
+
+            switch (outputMode) {
+                case 'pixel':
+                    output = `points="${points.map(p => `${p.x},${p.y}`).join(' ')}"`;
+                    break;
+
+                case 'percent':
+                    output = `points="${points.map(p => {
+                        const xPct = ((p.x / naturalWidth) * 100).toFixed(2);
+                        const yPct = ((p.y / naturalHeight) * 100).toFixed(2);
+                        return `${xPct}%,${yPct}%`;
+                    }).join(' ')}"`;
+                    break;
+
+                default: // viewbox - FOR TEST.HTML
+                    const vbPoints = points.map(p => naturalToViewBox(p.x, p.y));
+                    output = `points="${vbPoints.map(p => `${p.x},${p.y}`).join(' ')}"`;
+            }
+
+            outputBox.textContent = output;
+        }
+
+        function updateStats() {
+            const vb = getViewBox();
+            document.getElementById('pointCount').textContent = points.length;
+            document.getElementById('naturalSize').textContent = `${naturalWidth}×${naturalHeight}`;
+            document.getElementById('viewboxSize').textContent = `${vb.w}×${vb.h}`;
+
+            if (naturalWidth > 0) {
+                const scaleX = (vb.w / naturalWidth).toFixed(4);
+                document.getElementById('scaleInfo').textContent = `×${scaleX}`;
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('undoBtn').disabled = points.length === 0;
+            document.getElementById('clearBtn').disabled = points.length === 0;
+            document.getElementById('closeBtn').disabled = points.length < 3 || isClosed;
+            document.getElementById('copyBtn').disabled = points.length === 0;
+            document.getElementById('viewBtn').disabled = !isClosed;
+        }
+
+        function undo() {
+            if (isClosed) isClosed = false;
+            else if (points.length > 0) points.pop();
+            render();
+        }
+
+        function clearAll() {
+            points = [];
+            isClosed = false;
+            svgCanvas.classList.remove('move-mode');
+            render();
+        }
+
+        function closePolygon() {
+            if (points.length >= 3) {
+                isClosed = true;
+                render();
+                showToast('Polygon closed! Drag to move, or click 👁 View Selected');
+            }
+        }
+
+        /*
+         * VIEW SELECTED PORTION
+         * Clips the image to the polygon and shows in a modal
+         */
+        function viewSelectedPortion() {
+            if (!isClosed || points.length < 3) return;
+
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Find bounding box of polygon in natural coordinates
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            points.forEach(p => {
+                minX = Math.min(minX, p.x);
+                minY = Math.min(minY, p.y);
+                maxX = Math.max(maxX, p.x);
+                maxY = Math.max(maxY, p.y);
+            });
+
+            // Add padding
+            const pad = 20;
+            minX = Math.max(0, minX - pad);
+            minY = Math.max(0, minY - pad);
+            maxX = Math.min(naturalWidth, maxX + pad);
+            maxY = Math.min(naturalHeight, maxY + pad);
+
+            const cropW = maxX - minX;
+            const cropH = maxY - minY;
+
+            canvas.width = cropW;
+            canvas.height = cropH;
+
+            // Draw dimmed background
+            ctx.fillStyle = '#0d0d1a';
+            ctx.fillRect(0, 0, cropW, cropH);
+
+            // Draw the full cropped region dimmed
+            ctx.globalAlpha = 0.3;
+            ctx.drawImage(mainImage, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+            ctx.globalAlpha = 1.0;
+
+            // Clip to polygon shape and draw bright
+            ctx.save();
+            ctx.beginPath();
+            points.forEach((p, i) => {
+                const x = p.x - minX;
+                const y = p.y - minY;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.drawImage(mainImage, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+            ctx.restore();
+
+            // Draw polygon outline on preview
+            ctx.beginPath();
+            points.forEach((p, i) => {
+                const x = p.x - minX;
+                const y = p.y - minY;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Show modal
+            document.getElementById('viewModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
+
+        function copyOutput() {
+            navigator.clipboard.writeText(outputBox.textContent).then(() => {
+                showToast('Copied! Paste in test.html');
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+            if (e.key === 'Escape') {
+                if (document.getElementById('viewModal').classList.contains('active')) {
+                    closeModal();
+                } else {
+                    clearAll();
+                }
+            }
+            if (e.key === 'Enter' && points.length >= 3) closePolygon();
+        });
+
+        // Resize
+        window.addEventListener('resize', () => {
+            if (naturalWidth > 0) render();
+        });
+
+        // ViewBox input change
+        document.getElementById('viewboxW').addEventListener('input', () => { setupSVG(); });
+        document.getElementById('viewboxH').addEventListener('input', () => { setupSVG(); });
+    </script>
+</body>
+
+</html>
