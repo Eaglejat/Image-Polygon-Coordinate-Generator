@@ -30,7 +30,7 @@ EOF
 
         stage('Run Container') {
             steps {
-                sh 'docker run -d -p 5431:80 --name html-container html-app'
+                sh 'docker run -d -p 3000:80 --name html-container html-app'
             }
         }
     }
