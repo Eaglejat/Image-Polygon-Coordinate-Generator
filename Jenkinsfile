@@ -3,12 +3,6 @@ pipeline {
 
     stages {
 
-        stage('Clone Code') {
-            steps {
-                git 'https://github.com/Eaglejat/Image-Polygon-Coordinate-Generator.git'
-            }
-        }
-
         stage('Prepare Dockerfile') {
             steps {
                 sh '''
