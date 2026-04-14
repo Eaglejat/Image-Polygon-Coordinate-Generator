@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('* * * * *')   // auto trigger on code changes
+        pollSCM('* * * * *')   // auto trigger (later webhook se replace kar sakte ho)
     }
 
     environment {
@@ -12,12 +12,6 @@ pipeline {
     }
 
     stages {
-
-        stage('Checkout Code') {
-            steps {
-                git 'https://github.com/Eaglejat/Image-Polygon-Coordinate-Generator'
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
@@ -39,6 +33,12 @@ pipeline {
                 --name $CONTAINER_NAME \
                 $IMAGE_NAME:latest
                 '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh 'docker ps | grep $CONTAINER_NAME'
             }
         }
 
