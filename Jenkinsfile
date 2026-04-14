@@ -1,36 +1,50 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('* * * * *')   // auto trigger on code changes
+    }
+
+    environment {
+        IMAGE_NAME = "html-app"
+        CONTAINER_NAME = "html-container"
+        PORT = "3000"
+    }
+
     stages {
 
-        stage('Prepare Dockerfile') {
+        stage('Checkout Code') {
             steps {
-                sh '''
-cat <<EOF > Dockerfile
-FROM nginx:alpine
-COPY . /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-                '''
+                git 'https://github.com/Eaglejat/Image-Polygon-Coordinate-Generator'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t html-app .'
+                sh 'docker build -t $IMAGE_NAME:latest .'
             }
         }
 
         stage('Stop Old Container') {
             steps {
-                sh 'docker rm -f html-container || true'
+                sh 'docker rm -f $CONTAINER_NAME || true'
             }
         }
 
-        stage('Run Container') {
+        stage('Run New Container') {
             steps {
-                sh 'docker run -d -p 3000:80 --name html-container html-app'
+                sh '''
+                docker run -d \
+                -p $PORT:80 \
+                --name $CONTAINER_NAME \
+                $IMAGE_NAME:latest
+                '''
+            }
+        }
+
+        stage('Cleanup Old Images') {
+            steps {
+                sh 'docker image prune -f'
             }
         }
     }
