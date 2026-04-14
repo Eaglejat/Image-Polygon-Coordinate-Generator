@@ -6,12 +6,12 @@ pipeline {
         stage('Prepare Dockerfile') {
             steps {
                 sh '''
-                cat <<EOF > Dockerfile
-                FROM nginx:alpine
-                COPY . /usr/share/nginx/html
-                EXPOSE 80
-                CMD ["nginx", "-g", "daemon off;"]
-                EOF
+cat <<EOF > Dockerfile
+FROM nginx:alpine
+COPY . /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+EOF
                 '''
             }
         }
